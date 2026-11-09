@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth select-none overflow-x-hidden">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Mr Black Hats Store | Hardware Security Labs & Blueprints</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:{500:'#0284c7',600:'#0369a1'},surface:{base:'#080c14',card:'#0f172a',subtle:'#1e293b',border:'#334155'}},fontFamily:{sans:['Inter','sans-serif'],display:['Plus Jakarta Sans','sans-serif'],mono:['JetBrains Mono','monospace']}}}}
+</script>
+<style>
+html,body{background:#080c14;color:#e2e8f0;-webkit-user-select:none;user-select:none;overflow-x:hidden;max-width:100vw}
+.clean-card{background:#0f172a;border:1px solid #1e293b;transition:all .25s ease}
+.clean-card:hover{border-color:#38bdf8;box-shadow:0 10px 25px -8px rgba(2,132,199,.2);transform:translateY(-2px)}
+.inp{width:100%;background:#090d16;border:1px solid #334155;border-radius:.5rem;padding:.55rem .75rem;color:#fff;outline:none;font-size:.75rem}
+.inp:focus{border-color:#0284c7}
+.lbl{display:block;color:#94a3b8;margin-bottom:.25rem;font-size:.75rem}
+.mdl{position:fixed;inset:0;z-index:50;overflow-y:auto}
+.mdl-bg{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(4px)}
+.mdl-wrap{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:.75rem}
+.mdl-box{position:relative;width:100%;background:#0f172a;border:1px solid #334155;border-radius:.75rem;padding:1.25rem;color:#e2e8f0;box-shadow:0 25px 50px -12px rgba(0,0,0,.7)}
+@keyframes floatWatermark{0%{transform:translate(10px,10px)}50%{transform:translate(140px,100px)}100%{transform:translate(10px,10px)}}
+.drm-watermark{position:absolute;pointer-events:none;z-index:50;opacity:.18;font-size:13px;font-weight:700;color:#38bdf8;animation:floatWatermark 12s infinite ease-in-out}
+#securityShield{display:none;position:fixed;inset:0;background:#000;z-index:999999;color:#ef4444;font-family:monospace;align-items:center;justify-content:center;text-align:center;padding:20px}
+</style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+<div id="securityShield" onclick="this.style.display='none'">
+  <div>
+    <div class="text-2xl sm:text-4xl font-bold mb-2">⚠ SECURITY PROTOCOL TRIGGERED</div>
+    <p class="text-slate-400 text-xs sm:text-sm max-w-md mx-auto mb-4">Screen capture or window detachment detected. Content paused.</p>
+    <button class="px-4 py-2 bg-red-950 border border-red-700 text-red-300 rounded text-xs font-mono">Click to Resume</button>
+  </div>
+</div>
+
+<!-- TOP HEADER -->
+<div class="bg-surface-card border-b border-surface-border/40 text-[11px] sm:text-xs py-2 px-3 sm:px-4 text-slate-400">
+  <div class="max-w-7xl mx-auto w-full flex flex-wrap justify-between items-center gap-2">
+    <div class="flex items-center gap-1.5">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+      <span class="text-slate-300 font-medium truncate">mrblackhats.store • <span id="cloudStatusText">Stealth Courier Active</span></span>
+    </div>
+    <div class="flex items-center gap-2.5 sm:gap-4 ml-auto">
+      <a href="https://whatsapp.com/channel/0029Vb8xrdP8aKvR0YQqzp2S" target="_blank" class="text-emerald-400 hover:text-white font-medium flex items-center gap-1"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span class="hidden md:inline">WhatsApp Channel</span></a>
+      <a href="https://instagram.com/mrblackhatsstore" target="_blank" class="text-pink-400 hover:text-white font-medium flex items-center gap-1"><i data-lucide="instagram" class="w-3.5 h-3.5"></i><span class="hidden md:inline">@mrblackhatsstore</span></a>
+      <button onclick="openTrackingModal()" class="text-sky-400 hover:text-white font-medium flex items-center gap-1"><i data-lucide="truck" class="w-3.5 h-3.5"></i><span>Track Order</span></button>
+      <button onclick="handleAdminButtonClick()" class="text-brand-500 hover:text-white font-medium flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i><span>Admin Portal</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<header class="sticky top-0 z-40 bg-surface-base/95 backdrop-blur-md border-b border-surface-border/50">
+  <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:h-20 flex flex-wrap items-center justify-between gap-2">
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md shrink-0"><i data-lucide="cpu" class="w-5 h-5"></i></div>
+      <div>
+        <span class="font-display font-extrabold text-base sm:text-xl text-white tracking-tight block leading-none">MR BLACK HATS</span>
+        <span class="text-[9px] sm:text-[10px] tracking-wider text-slate-400 block mt-0.5 font-semibold uppercase">Hardware Labs & Blueprints</span>
+      </div>
+    </a>
+    <div class="flex items-center gap-1.5 sm:gap-2.5">
+      <a href="https://whatsapp.com/channel/0029Vb8xrdP8aKvR0YQqzp2S" target="_blank" class="hidden sm:flex px-3 py-2 text-xs font-semibold text-emerald-400 hover:text-white bg-emerald-950/40 rounded-lg border border-emerald-800/60 items-center gap-1.5"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i><span>WA Channel</span></a>
+      <a href="https://instagram.com/mrblackhatsstore" target="_blank" class="hidden sm:flex px-3 py-2 text-xs font-semibold text-pink-400 hover:text-white bg-pink-950/30 rounded-lg border border-pink-800/50 items-center gap-1.5"><i data-lucide="instagram" class="w-3.5 h-3.5"></i><span>Instagram</span></a>
+      <button onclick="openVaultModal()" class="px-2.5 py-2 text-xs font-semibold text-sky-400 hover:text-white bg-sky-950/40 rounded-lg border border-sky-800/60 flex items-center gap-1"><i data-lucide="key" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">My Vault</span></button>
+      <button onclick="openAuthModal()" class="px-2.5 py-2 text-xs font-semibold text-slate-200 hover:text-white bg-surface-subtle rounded-lg border border-slate-700 flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5"></i><span id="userLoginStatusText">Login</span></button>
+      <button onclick="toggleCart()" class="px-3 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-lg shadow-sm flex items-center gap-1.5"><i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i><span>Cart (<span id="cartCount">0</span>)</span></button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="relative pt-8 pb-8 sm:pt-10 sm:pb-12 px-4 max-w-6xl mx-auto text-center">
+  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-sky-500/20 bg-sky-500/10 text-sky-400 text-[11px] font-medium mb-3"><i data-lucide="shield" class="w-3.5 h-3.5"></i> Hardware Projects • Build Masterclasses • Firmware Codes</div>
+  <h1 class="font-display font-extrabold text-2xl sm:text-5xl text-white tracking-tight max-w-3xl mx-auto leading-tight">Handcrafted Pentest Tools, Wiring Tutorials & Exploit Codes</h1>
+  <p class="max-w-2xl mx-auto text-slate-400 text-xs sm:text-sm mt-2.5 leading-relaxed">Order ready-to-plug devices, step-by-step 4K assembly wiring blueprints, or grab tested Arduino/Python exploit firmwares.</p>
+  <div class="flex flex-wrap items-center justify-center gap-2.5 mt-5">
+    <a href="https://whatsapp.com/channel/0029Vb8xrdP8aKvR0YQqzp2S" target="_blank" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-lg flex items-center gap-1.5"><i data-lucide="message-circle" class="w-4 h-4"></i> Join WhatsApp Channel</a>
+    <a href="https://instagram.com/mrblackhatsstore" target="_blank" class="px-4 py-2.5 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 text-white font-bold text-xs rounded-lg shadow-lg flex items-center gap-1.5"><i data-lucide="instagram" class="w-4 h-4"></i> Follow @mrblackhatsstore</a>
+    <button onclick="openTrackingModal()" class="px-4 py-2.5 bg-surface-subtle border border-surface-border hover:border-slate-500 text-slate-300 font-semibold text-xs rounded-lg flex items-center gap-1.5"><i data-lucide="search" class="w-4 h-4"></i> Track My Existing Parcel</button>
+  </div>
+</section>
+
+<!-- MAIN CATALOGUE -->
+<main class="max-w-7xl mx-auto px-3 sm:px-6 pb-20 flex-1 w-full">
+  <div class="flex justify-center mb-6">
+    <div class="grid grid-cols-2 sm:inline-flex p-1.5 bg-surface-card border border-surface-border rounded-xl gap-1 w-full sm:w-auto">
+      <button onclick="switchMainSection('hardware')" id="tabHardwareBtn" class="px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-brand-600 text-white shadow-md"><i data-lucide="cpu" class="w-3.5 h-3.5"></i> Hardware (<span id="countHardware">0</span>)</button>
+      <button onclick="switchMainSection('videos')" id="tabVideosBtn" class="px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white"><i data-lucide="video" class="w-3.5 h-3.5"></i> Videos (<span id="countVideos">0</span>)</button>
+      <button onclick="switchMainSection('codes')" id="tabCodesBtn" class="px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white"><i data-lucide="code" class="w-3.5 h-3.5"></i> Codes (<span id="countCodes">0</span>)</button>
+      <button onclick="switchMainSection('reviews')" id="tabReviewsBtn" class="px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-amber-400 hover:text-white"><i data-lucide="star" class="w-3.5 h-3.5"></i> Reviews (<span id="countReviews">0</span>)</button>
+    </div>
+  </div>
+
+  <div id="sectionHardware"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="hardwareGrid"></div></div>
+  <div id="sectionVideos" class="hidden"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="videosGrid"></div></div>
+  <div id="sectionCodes" class="hidden"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="codesGrid"></div></div>
+
+  <!-- CUSTOMER REVIEWS SECTION -->
+  <div id="sectionReviews" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-4 bg-surface-card border border-surface-border rounded-xl p-5 h-fit space-y-4">
+        <div class="border-b border-slate-800 pb-3">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">VERIFIED FEEDBACK</span>
+          <h3 class="font-display font-bold text-lg text-white">Rate & Review a Product</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Select any product to post your rating and review.</p>
+        </div>
+        <form onsubmit="submitHubReview(event)" class="space-y-3 text-xs">
+          <div><label class="lbl">Select Product *</label><select id="hubRevProduct" required class="inp"></select></div>
+          <div>
+            <label class="lbl">Your Rating *</label>
+            <div class="flex items-center gap-1.5 bg-slate-950 border border-slate-700 rounded-lg p-2" id="hubStarContainer">
+              <button type="button" onclick="setHubStars(1)" class="text-xl text-amber-400">★</button>
+              <button type="button" onclick="setHubStars(2)" class="text-xl text-amber-400">★</button>
+              <button type="button" onclick="setHubStars(3)" class="text-xl text-amber-400">★</button>
+              <button type="button" onclick="setHubStars(4)" class="text-xl text-amber-400">★</button>
+              <button type="button" onclick="setHubStars(5)" class="text-xl text-amber-400">★</button>
+              <span id="hubStarLabel" class="ml-2 text-amber-400 font-bold text-xs">5 / 5 Stars</span>
+            </div>
+          </div>
+          <div><label class="lbl">Your Name / Callsign *</label><input type="text" id="hubRevName" required placeholder="e.g. Aditya K." class="inp"></div>
+          <div><label class="lbl">Your Review *</label><textarea id="hubRevComment" rows="3" required placeholder="Write about build quality, range, or tutorial clarity..." class="inp"></textarea></div>
+          <button type="submit" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg shadow-lg">★ Post Product Review</button>
+        </form>
+      </div>
+      <div class="lg:col-span-8 space-y-4">
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="px-3.5 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 font-display font-extrabold text-2xl" id="overallStoreAvg">5.0</div>
+            <div><div class="text-amber-400 text-sm tracking-widest">★★★★★</div><p class="text-xs text-slate-400">Based on <span id="overallStoreCount" class="text-white font-bold">0</span> customer reviews</p></div>
+          </div>
+          <div class="w-full sm:w-auto"><select id="filterRevProduct" onchange="renderReviewsSection()" class="inp sm:w-52"><option value="all">All Products</option></select></div>
+        </div>
+        <div id="reviewsFeedList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PRODUCT REVIEW MODAL -->
+<div id="productReviewModal" class="mdl hidden">
+  <div onclick="closeProductReviewModal()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-2xl">
+    <div class="flex justify-between items-start pb-3 mb-4 border-b border-surface-border">
+      <div><span class="text-[10px] font-bold text-amber-400 uppercase">PRODUCT RATINGS & REVIEWS</span><h3 id="prmTitle" class="font-display font-bold text-lg text-white mt-0.5">Product</h3><div id="prmStats" class="text-xs text-slate-400 mt-0.5"></div></div>
+      <button onclick="closeProductReviewModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+      <form onsubmit="submitModalProductReview(event)" class="md:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 text-xs h-fit">
+        <h4 class="font-bold text-white text-sm">Rate this Product</h4>
+        <input type="hidden" id="prmProductKey"><input type="hidden" id="prmProductName">
+        <div>
+          <label class="lbl">Select Stars *</label>
+          <div class="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded p-2" id="modalStarContainer">
+            <button type="button" onclick="setModalStars(1)" class="text-lg text-amber-400">★</button>
+            <button type="button" onclick="setModalStars(2)" class="text-lg text-amber-400">★</button>
+            <button type="button" onclick="setModalStars(3)" class="text-lg text-amber-400">★</button>
+            <button type="button" onclick="setModalStars(4)" class="text-lg text-amber-400">★</button>
+            <button type="button" onclick="setModalStars(5)" class="text-lg text-amber-400">★</button>
+            <span id="modalStarLabel" class="ml-1.5 text-amber-400 font-bold text-[11px]">5/5</span>
+          </div>
+        </div>
+        <div><label class="lbl">Your Name *</label><input type="text" id="prmUserName" required placeholder="Your Name" class="inp"></div>
+        <div><label class="lbl">Your Review *</label><textarea id="prmComment" rows="3" required placeholder="Share your feedback..." class="inp"></textarea></div>
+        <button type="submit" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded">Submit Review</button>
+      </form>
+      <div class="md:col-span-7 space-y-2.5 max-h-80 overflow-y-auto pr-1" id="prmReviewsList"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ORDER TRACKING MODAL -->
+<div id="trackingModal" class="mdl hidden">
+  <div onclick="closeTrackingModal()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-lg">
+    <div class="flex justify-between items-center pb-3 mb-4 border-b border-surface-border">
+      <div class="flex items-center gap-2"><i data-lucide="truck" class="w-5 h-5 text-emerald-400"></i><h3 class="font-display font-bold text-base text-white">Live Parcel Tracking</h3></div>
+      <button onclick="closeTrackingModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="text-xs space-y-3">
+      <p class="text-slate-400">Enter your Registered Mobile Number or Order ID (e.g. <code>MBH-1021</code>):</p>
+      <div class="flex gap-2"><input type="text" id="trackSearchInput" placeholder="Enter Mobile No or Order ID" class="inp flex-1"><button onclick="searchOrderStatus()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg">Track</button></div>
+      <div id="trackingResult" class="mt-4 pt-4 border-t border-slate-800 hidden"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div id="upiCheckoutModal" class="mdl hidden">
+  <div onclick="closeUpiCheckout()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-md">
+    <div class="flex justify-between items-center pb-3 mb-4 border-b border-surface-border">
+      <div class="flex items-center gap-2"><i data-lucide="shield-check" class="w-5 h-5 text-emerald-400"></i><h3 class="font-display font-bold text-base text-white">Secure Order Checkout</h3></div>
+      <button onclick="closeUpiCheckout()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="mb-4 p-3.5 bg-sky-950/40 border border-sky-700/60 rounded-xl text-center">
+      <div class="text-xs font-bold text-white mb-1 flex items-center justify-center gap-1.5"><i data-lucide="zap" class="w-4 h-4 text-sky-400"></i> Instant Automated Payment Gateway</div>
+      <p class="text-[11px] text-slate-400 mb-2.5">Enter your Mobile & Address below, then click to pay via UPI, Cards, or NetBanking.</p>
+      <button type="button" onclick="launchRazorpayCheckout()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-lg shadow flex items-center justify-center gap-2"><i data-lucide="credit-card" class="w-4 h-4"></i> Pay Instantly via Razorpay (<span id="rzpBtnAmount">₹0</span>)</button>
+    </div>
+    <div class="relative flex py-1 items-center mb-3"><div class="flex-grow border-t border-slate-800"></div><span class="flex-shrink mx-3 text-[10px] text-slate-500 uppercase font-semibold">OR DIRECT UPI QR SCAN</span><div class="flex-grow border-t border-slate-800"></div></div>
+    <div class="text-center">
+      <div class="p-2.5 bg-white rounded-xl inline-block shadow-lg mx-auto mb-2"><img id="upiQrImage" src="" alt="UPI QR" class="w-36 h-36 mx-auto"></div>
+      <div class="text-xs font-mono text-slate-300 mb-0.5">Total Payable: <span id="upiPayableAmount" class="font-bold text-emerald-400 text-base">₹0</span></div>
+      <div class="text-[11px] text-slate-500 mb-3 font-mono">UPI VPA: <span id="upiVpaDisplay" class="text-sky-400 font-bold">8081275719-2@ybl</span></div>
+    </div>
+    <form onsubmit="handleUpiOrderSubmit(event)" class="space-y-3 text-xs border-t border-slate-800 pt-3">
+      <div><label class="lbl">Customer Mobile Number *</label><input type="tel" id="upiPhone" required placeholder="10-digit mobile number" class="inp"></div>
+      <div><label class="lbl">Full Shipping Address (For Hardware) / Email *</label><textarea id="upiAddress" rows="2" required placeholder="House No, Street, City, State, Pincode" class="inp"></textarea></div>
+      <div><label class="lbl text-emerald-400 font-semibold">12-Digit UPI UTR / Ref No. (For Manual QR) *</label><input type="text" id="upiUtr" required placeholder="e.g. 403819284719" class="inp font-mono"></div>
+      <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded-lg mt-2 shadow-lg">Submit Manual UPI Order & Confirm</button>
+    </form>
+  </div></div>
+</div>
+
+<!-- DIGITAL VAULT MODAL -->
+<div id="vaultModal" class="mdl hidden">
+  <div onclick="closeVaultModal()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-3xl">
+    <div class="flex justify-between items-center pb-4 mb-4 border-b border-surface-border">
+      <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i data-lucide="shield-check" class="w-4 h-4"></i></div><div><h3 class="font-display font-bold text-base sm:text-lg text-white">My Digital Library (DRM Protected)</h3><p class="text-xs text-slate-400">Single-Device Locked: Unlocked videos and source codes.</p></div></div>
+      <button onclick="closeVaultModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div id="vaultContent" class="space-y-4"></div>
+  </div></div>
+</div>
+
+<!-- DRM VIEWER -->
+<div id="drmViewerModal" class="mdl hidden">
+  <div class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-4xl overflow-hidden">
+    <div id="floatingWatermark" class="drm-watermark font-mono"></div>
+    <div class="flex justify-between items-center pb-3 mb-4 border-b border-surface-border">
+      <div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded text-[10px] bg-sky-950 text-sky-400 border border-sky-800 font-bold uppercase" id="drmViewerType">MASTERCLASS</span><h4 id="drmViewerTitle" class="font-bold text-white text-sm sm:text-base"></h4></div>
+      <button onclick="closeDrmViewer()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div id="drmViewerBody" class="w-full min-h-[300px] sm:min-h-[380px] bg-slate-950 rounded-lg border border-slate-800 overflow-hidden relative flex items-center justify-center"></div>
+    <div class="flex justify-between items-center mt-4 text-[10px] sm:text-[11px] text-slate-400 font-mono"><span class="text-emerald-400">🔒 Device-Locked Access</span><span>Watermark Active</span></div>
+  </div></div>
+</div>
+
+<!-- 3D VIEWER -->
+<div id="view3dModal" class="mdl hidden">
+  <div onclick="close3dModal()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-2xl">
+    <div class="flex justify-between items-center pb-4 mb-2 border-b border-surface-border">
+      <div><h3 id="3dModalTitle" class="font-display font-bold text-base sm:text-lg text-white">Hardware 3D Inspection</h3><p class="text-xs text-slate-400">Drag around the device to inspect components.</p></div>
+      <button onclick="close3dModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div id="threeContainer" class="w-full h-72 sm:h-80 bg-slate-950 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing border border-slate-800"></div>
+    <div class="flex justify-between items-center mt-4 text-xs text-slate-400"><span class="flex items-center gap-1.5"><i data-lucide="rotate-3d" class="w-4 h-4 text-sky-400"></i> Interactive 360° Orbit</span><button onclick="close3dModal()" class="px-4 py-2 bg-surface-subtle hover:bg-slate-700 text-white rounded-lg text-xs">Close</button></div>
+  </div></div>
+</div>
+
+<!-- CUSTOMER AUTH MODAL -->
+<div id="authModal" class="mdl hidden">
+  <div onclick="closeAuthModal()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-md">
+    <div class="flex justify-between items-center pb-3 border-b border-surface-border mb-4"><h3 id="authTitle" class="font-display font-bold text-lg text-white">Customer Account</h3><button onclick="closeAuthModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+    <div class="flex border-b border-slate-800 mb-5">
+      <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 font-semibold text-xs border-b-2 border-brand-500 text-white">Sign In</button>
+      <button id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200">Create Account</button>
+    </div>
+    <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4 text-xs">
+      <div><label class="lbl">Mobile Number</label><input type="tel" id="authPhone" required placeholder="Enter 10-digit mobile number" class="inp"></div>
+      <div><label class="lbl">Account Password</label><input type="password" id="authPassword" required placeholder="Enter password" class="inp"></div>
+      <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-lg mt-2">Sign In</button>
+    </form>
+  </div></div>
+</div>
+
+<!-- ADMIN PORTAL -->
+<div id="adminPortalModal" class="mdl hidden">
+  <div onclick="closeAdminPortal()" class="mdl-bg"></div>
+  <div class="mdl-wrap"><div class="mdl-box max-w-5xl">
+    <div class="flex flex-wrap justify-between items-center pb-4 mb-6 border-b border-surface-border gap-2">
+      <div class="flex items-center gap-2"><div class="w-8 h-8 rounded bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold"><i data-lucide="shield-alert" class="w-4 h-4"></i></div><div><h3 class="font-display font-bold text-base sm:text-lg text-white">Administrator Control Center</h3><p class="text-[11px] text-slate-400">Manage Products, Prices, Orders & Export Updated Website Code.</p></div></div>
+      <div class="flex items-center gap-2">
+        <button onclick="downloadUpdatedHtml()" id="adminExportBtn" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> 💾 Download Updated HTML</button>
+        <button onclick="adminLogout()" id="adminLogoutBtn" class="hidden text-xs text-red-400 hover:underline px-2">Logout</button>
+        <button onclick="closeAdminPortal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+    </div>
+
+    <div id="adminLoginView" class="max-w-sm mx-auto py-6">
+      <div class="text-center mb-6"><i data-lucide="lock" class="w-8 h-8 text-sky-400 mx-auto mb-2"></i><h4 class="font-bold text-white text-base">Enter Admin Credentials</h4><p class="text-xs text-slate-400 mt-1">Authorized Mobile Number and Master Password required.</p></div>
+      <form onsubmit="handleAdminLogin(event)" class="space-y-4 text-xs">
+        <div><label class="lbl">Admin Number</label><input type="tel" id="adminAuthNumber" required placeholder="Enter authorized mobile number" autocomplete="off" class="inp"></div>
+        <div><label class="lbl">Master Password</label><input type="password" id="adminAuthPassword" required placeholder="Enter master password" autocomplete="off" class="inp"></div>
+        <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-lg mt-2">Authenticate & Enter</button>
+      </form>
+      <div class="mt-4 text-center"><button onclick="toggleAdminResetView(true)" class="text-xs text-sky-400 hover:underline">Forgot / Reset Admin Credentials?</button></div>
+    </div>
+
+    <div id="adminResetView" class="max-w-sm mx-auto py-6 hidden">
+      <div class="text-center mb-5"><i data-lucide="key-round" class="w-8 h-8 text-amber-400 mx-auto mb-2"></i><h4 class="font-bold text-white text-base">Master Credential Reset</h4><p class="text-xs text-slate-400 mt-1">Enter your Master Recovery Key to set new Admin credentials.</p></div>
+      <form onsubmit="handleAdminCredentialReset(event)" class="space-y-3 text-xs">
+        <div><label class="lbl">Master Recovery Key *</label><input type="password" id="resetRecoveryKey" required placeholder="Enter Master Recovery Key" class="inp font-mono"></div>
+        <div><label class="lbl">New Admin Mobile Number *</label><input type="tel" id="resetNewAdminPhone" required placeholder="Enter new authorized mobile number" class="inp"></div>
+        <div><label class="lbl">New Master Password *</label><input type="password" id="resetNewAdminPass" required placeholder="Create new strong password" class="inp"></div>
+        <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg">Reset & Save Credentials</button>
+        <button type="button" onclick="toggleAdminResetView(false)" class="w-full py-2 bg-slate-800 text-slate-300 rounded-lg">Back to Login</button>
+      </form>
+    </div>
+
+    <div id="adminDashboardView" class="hidden">
+      <div class="mb-4 p-3 bg-emerald-950/40 border border-emerald-700/50 rounded-xl text-xs text-emerald-300">
+        💡 <strong>GitHub Sync Tip:</strong> Price ya Product save karne ke baad upar <strong>"💾 Download Updated HTML"</strong> par click karein aur us nayi `index.html` file ko GitHub par upload (Commit) kar dein — har phone par naya price turant live ho jayega!
+      </div>
+      <div class="flex border-b border-slate-800 mb-6 flex-wrap gap-1">
+        <button onclick="switchAdminTab('hardware')" id="admTabHw" class="py-2.5 px-4 font-bold text-xs border-b-2 border-brand-500 text-white">Hardware Devices</button>
+        <button onclick="switchAdminTab('videos')" id="admTabVid" class="py-2.5 px-4 font-bold text-xs border-b-2 border-transparent text-slate-400 hover:text-white">Build Videos</button>
+        <button onclick="switchAdminTab('codes')" id="admTabCod" class="py-2.5 px-4 font-bold text-xs border-b-2 border-transparent text-slate-400 hover:text-white">Project Codes</button>
+        <button onclick="switchAdminTab('orders')" id="admTabOrd" class="py-2.5 px-4 font-bold text-xs border-b-2 border-transparent text-emerald-400 hover:text-white">Orders & Tracking</button>
+        <button onclick="switchAdminTab('settings')" id="admTabSet" class="py-2.5 px-4 font-bold text-xs border-b-2 border-transparent text-amber-400 hover:text-white">⚙ Settings & Cloud</button>
+      </div>
+
+      <div id="adminPanelHardware">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
+            <div class="flex justify-between items-center"><h4 class="font-bold text-white text-sm">Add / Edit Hardware Device</h4><button onclick="resetHwForm()" class="text-[11px] text-slate-400 hover:text-white">Clear</button></div>
+            <input type="hidden" id="hwEditId">
+            <div><label class="lbl">Title</label><input type="text" id="hwTitle" placeholder="Phantom NRF24 Pro" class="inp"></div>
+            <div class="grid grid-cols-2 gap-2">
+              <div><label class="lbl">Price (₹)</label><input type="number" id="hwPrice" placeholder="2499" class="inp"></div>
+              <div><label class="lbl">Category</label><select id="hwCat" class="inp"><option value="rf">NRF & RF</option><option value="hid">BadUSB / HID</option><option value="esp">ESP32 Lab Kits</option></select></div>
+            </div>
+            <div><label class="lbl">Photo Upload (or paste URL)</label><input type="file" id="hwImageFile" accept="image/*" class="w-full text-slate-400 text-xs mb-1.5"><input type="text" id="hwExistingImage" placeholder="https://images.unsplash.com/..." class="inp"></div>
+            <div class="p-2 bg-slate-950 border border-slate-800 rounded flex justify-between items-center"><span class="text-slate-300">Enable 3D Model View</span><input type="checkbox" id="hwHas3d" checked class="w-4 h-4"></div>
+            <div><label class="lbl">Description</label><textarea id="hwDesc" rows="2" class="inp"></textarea></div>
+            <div><label class="lbl">Specifications (Comma separated)</label><input type="text" id="hwSpecs" placeholder="0.96' OLED, SMA Antenna, 1200mAh" class="inp"></div>
+            <button onclick="saveHardwareProduct()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 font-bold text-white rounded">Save Hardware Device</button>
+          </div>
+          <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-xl p-4"><h4 class="font-bold text-white text-sm mb-3">Live Hardware Inventory (Click Edit to change price)</h4><div id="adminHwList" class="space-y-2 max-h-96 overflow-y-auto text-xs"></div></div>
+        </div>
+      </div>
+
+      <div id="adminPanelVideos" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
+            <h4 class="font-bold text-white text-sm">Add Build Video</h4>
+            <div><label class="lbl">Video Title</label><input type="text" id="vidTitle" placeholder="Full NRF24 Box Soldering Guide" class="inp"></div>
+            <div class="grid grid-cols-2 gap-2">
+              <div><label class="lbl">Price (₹)</label><input type="number" id="vidPrice" placeholder="599" class="inp"></div>
+              <div><label class="lbl">Duration</label><input type="text" id="vidDuration" placeholder="1h 24m HD" class="inp"></div>
+            </div>
+            <div><label class="lbl">Video URL (YouTube Watch or Embed)</label><input type="url" id="vidUrl" placeholder="https://www.youtube.com/watch?v=..." class="inp"></div>
+            <div><label class="lbl">Description</label><textarea id="vidDesc" rows="3" class="inp"></textarea></div>
+            <button onclick="saveVideoProduct()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-bold text-white rounded">+ Publish Video Blueprint</button>
+          </div>
+          <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-xl p-4"><h4 class="font-bold text-white text-sm mb-3">Published Video Blueprints</h4><div id="adminVidList" class="space-y-2 max-h-96 overflow-y-auto text-xs"></div></div>
+        </div>
+      </div>
+
+      <div id="adminPanelCodes" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs space-y-3">
+            <h4 class="font-bold text-white text-sm">Add Firmware Code</h4>
+            <div><label class="lbl">Script Name</label><input type="text" id="codeTitle" placeholder="GhostDucky Payload (.ino)" class="inp"></div>
+            <div class="grid grid-cols-2 gap-2">
+              <div><label class="lbl">Price (₹)</label><input type="number" id="codePrice" placeholder="399" class="inp"></div>
+              <div><label class="lbl">Language</label><input type="text" id="codeLang" placeholder="C++ / Arduino" class="inp"></div>
+            </div>
+            <div><label class="lbl">Description</label><input type="text" id="codeDesc" class="inp"></div>
+            <div><label class="lbl">Direct Source Code Text</label><textarea id="codeRawContent" rows="6" class="inp font-mono"></textarea></div>
+            <button onclick="saveCodeProduct()" class="w-full py-2.5 bg-sky-600 hover:bg-sky-500 font-bold text-white rounded">+ Publish Source Code</button>
+          </div>
+          <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-xl p-4"><h4 class="font-bold text-white text-sm mb-3">Published Codes & Firmware</h4><div id="adminCodList" class="space-y-2 max-h-96 overflow-y-auto text-xs"></div></div>
+        </div>
+      </div>
+
+      <div id="adminPanelOrders" class="hidden">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <h4 class="font-bold text-white text-sm mb-3 flex items-center justify-between"><span>Customer Orders & Parcel Status</span><span class="text-xs text-slate-400">Total: <span id="adminOrdersCount">0</span></span></h4>
+          <div id="adminOrdersList" class="space-y-3 max-h-96 overflow-y-auto text-xs"></div>
+        </div>
+      </div>
+
+      <div id="adminPanelSettings" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm"><i data-lucide="database" class="w-4 h-4"></i> Supabase Cloud Backend</div>
+            <div><label class="lbl">Supabase Project URL</label><input type="url" id="cfgSupabaseUrl" placeholder="https://xyz.supabase.co" class="inp font-mono"></div>
+            <div><label class="lbl">Supabase Anon Public Key</label><input type="password" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5..." class="inp font-mono"></div>
+            <button onclick="saveIntegrationConfig()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded">Save & Connect Cloud DB</button>
+            <button onclick="pushLocalDataToCloud()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 font-semibold rounded border border-slate-700">⬆ Push Local Inventory to Cloud</button>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center gap-2 text-sky-400 font-bold text-sm"><i data-lucide="credit-card" class="w-4 h-4"></i> Payment Gateway & UPI</div>
+            <div><label class="lbl">Razorpay Key ID (Live/Test)</label><input type="text" id="cfgRazorpayKey" value="rzp_live_Td6nlSJ9Jw15sR" class="inp font-mono"></div>
+            <div><label class="lbl">Merchant UPI VPA ID</label><input type="text" id="cfgUpiId" placeholder="8081275719-2@ybl" class="inp font-mono"></div>
+            <div><label class="lbl">WhatsApp Order Number</label><input type="text" id="cfgWhatsappNo" placeholder="Enter WhatsApp Number" class="inp font-mono"></div>
+            <button onclick="saveIntegrationConfig()" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded">Save Payment Settings</button>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+            <div class="flex items-center gap-2 text-amber-400 font-bold text-sm"><i data-lucide="key-round" class="w-4 h-4"></i> Update Admin Credentials</div>
+            <div><label class="lbl">New Admin Mobile Number</label><input type="tel" id="cfgNewAdminPhone" placeholder="Enter new admin mobile number" class="inp"></div>
+            <div><label class="lbl">New Admin Master Password</label><input type="password" id="cfgNewAdminPass" placeholder="Enter new master password" class="inp"></div>
+            <button onclick="updateAdminCredentialsFromDashboard()" class="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded">Update Admin Login</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- CART SLIDE-OVER -->
+<div id="cartModal" class="fixed inset-0 z-50 overflow-hidden hidden">
+  <div onclick="toggleCart()" class="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
+  <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-6">
+    <div class="pointer-events-auto w-screen max-w-md bg-surface-card border-l border-surface-border text-slate-200 flex flex-col justify-between shadow-2xl">
+      <div class="p-5 border-b border-surface-border flex items-center justify-between">
+        <div class="flex items-center gap-2 font-display font-bold text-white"><i data-lucide="shopping-bag" class="w-5 h-5 text-sky-400"></i><span>Hardware Loadout</span></div>
+        <button onclick="toggleCart()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="cartItemList" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+      <div class="p-5 border-t border-surface-border bg-slate-950">
+        <div class="flex justify-between items-center mb-4"><span class="text-xs text-slate-400">Total Amount:</span><span id="cartTotalDisplay" class="font-display font-bold text-2xl text-white">₹0</span></div>
+        <div class="space-y-2">
+          <button onclick="openUpiCheckout()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-2 shadow-lg"><i data-lucide="qr-code" class="w-4 h-4"></i> PAY ONLINE / UPI QR (INSTANT CONFIRM)</button>
+          <button onclick="checkoutToWhatsApp()" class="w-full py-2.5 bg-surface-subtle hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-lg flex items-center justify-center gap-2"><i data-lucide="message-square" class="w-4 h-4"></i> Order via WhatsApp Direct</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="border-t border-surface-border/60 bg-surface-base py-10 text-center text-xs text-slate-500">
+  <div class="max-w-7xl mx-auto px-4 space-y-3">
+    <div class="font-display font-bold text-slate-300 text-sm">MR BLACK HATS STORE</div>
+    <div class="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
+      <a href="https://whatsapp.com/channel/0029Vb8xrdP8aKvR0YQqzp2S" target="_blank" class="flex items-center gap-1.5 text-emerald-400 hover:underline font-bold"><i data-lucide="message-circle" class="w-4 h-4"></i><span>Mr. Black Hat's WhatsApp Channel</span></a>
+      <span class="text-slate-600">|</span>
+      <a href="https://instagram.com/mrblackhatsstore" target="_blank" class="flex items-center gap-1.5 text-pink-400 hover:underline font-bold"><i data-lucide="instagram" class="w-4 h-4"></i><span>@mrblackhatsstore</span></a>
+    </div>
+    <p class="max-w-md mx-auto text-[11px] text-slate-400">Official store: mrblackhats.store • All devices are handcrafted for research & authorized auditing.</p>
+    <p class="text-slate-600">© 2026 Mr Black Hats Hardware Labs. Encrypted & Protected.</p>
+  </div>
+</footer>
+
+<script id="mbhBakedState" type="application/json">{}</script>
+
+<script>
+const $ = id => document.getElementById(id);
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','i','J','j','C','c'].includes(e.key)) || (e.ctrlKey && ['U','u','S','s'].includes(e.key))) { e.preventDefault(); return false; }
+});
+window.addEventListener('blur', () => {
+  if (document.activeElement && document.activeElement.tagName === 'IFRAME') return;
+  if (!$('drmViewerModal').classList.contains('hidden')) $('securityShield').style.display = 'flex';
+});
+window.addEventListener('focus', () => { $('securityShield').style.display = 'none'; });
+
+const _H1 = "ac9b0210c602b47793e8c2c7f34082b8f6dc2791c3c645c4b4897fdf44a5478a";
+const _H2 = "d84ff7f811dc3effa3c269d2ed7352c84bac82ab895ede51fe56bd6466143d7c";
+const MASTER_RECOVERY_KEY = "MBH-ROOT-RECOVERY-2026";
+const DEFAULT_RZP_KEY = "rzp_live_Td6nlSJ9Jw15sR";
+
+let baked = {};
+try { baked = JSON.parse($('mbhBakedState').textContent || '{}'); } catch (e) {}
+
+let storedConfig = JSON.parse(localStorage.getItem('mbh_config')) || {};
+let appConfig = {
+  supabaseUrl: baked.supabaseUrl || storedConfig.supabaseUrl || "",
+  supabaseKey: baked.supabaseKey || storedConfig.supabaseKey || "",
+  razorpayKey: baked.razorpayKey || storedConfig.razorpayKey || DEFAULT_RZP_KEY,
+  upiId: baked.upiId || storedConfig.upiId || "8081275719-2@ybl",
+  whatsappNo: baked.whatsappNo || storedConfig.whatsappNo || "919196103278",
+  adminHash: localStorage.getItem('mbh_admin_hash') || baked.adminHash || _H1
+};
+localStorage.setItem('mbh_config', JSON.stringify(appConfig));
+
+const defaultHardware = [
+  { id: 101, name: "Phantom NRF24 Dual-Box Pro", category: "rf", price: 2499, badge: "BESTSELLER", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80", desc: "High-gain 2.4GHz RF spectrum sniffer and keystroke injector box with SMA antenna and OLED telemetry.", features: ["Range: Up to 500m", "0.96' OLED Telemetry", "1000mAh Battery"], has3d: true },
+  { id: 102, name: "GhostDucky Keystroke Injector", category: "hid", price: 999, badge: "HOT SELLER", image: "https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=600&q=80", desc: "RP2040 micro dual-core keystroke injection apparatus in stealth housing. Automates pre-tested diagnostic scripts.", features: ["Dual-Core RP2040", "Instant Silent Mode", "Pre-loaded Payloads"], has3d: true },
+  { id: 103, name: "ESP32 Marauder Field Unit", category: "esp", price: 3899, badge: "FLAGSHIP", image: "https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=600&q=80", desc: "Comprehensive handheld wireless protocol research device with color TFT monitor and MicroSD PCAP logging.", features: ["Color TFT Screen", "PCAP Capture Slot", "Rechargeable Power Pack"], has3d: true }
+];
+
+const defaultVideos = [
+  { id: 201, title: "NRF24 Box Soldering & Full Wiring Blueprint", price: 599, duration: "1h 35m 4K", url: "https://www.youtube.com/embed/dQw4w9WgXcQ", desc: "Step-by-step pinouts, antenna booster wiring, and OLED connections." },
+  { id: 202, title: "ESP32 Marauder TFT Touch Screen Assembly", price: 699, duration: "2h 10m 4K", url: "https://www.youtube.com/embed/dQw4w9WgXcQ", desc: "Wiring SPI screens, soldering buttons, 3.7V battery, and flashing code." }
+];
+
+const defaultCodes = [
+  { id: 301, title: "Phantom NRF24 Auto-Sniffer & Injector (.ino)", price: 349, lang: "C++ / Arduino", desc: "Clean source code to capture packets and trigger keystroke injections.", code: "// Phantom NRF24 Source Code\n#include <SPI.h>\n#include <nRF24L01.h>\n#include <RF24.h>\nRF24 radio(9, 10);\nvoid setup() { Serial.begin(115200); radio.begin(); }\nvoid loop() { /* Audit loop */ }" },
+  { id: 302, title: "GhostDucky Multi-Payload Master Script", price: 299, lang: "DuckyScript / Python", desc: "20+ pre-tested automation payloads for system audits.", code: "REM GhostDucky Script\nDELAY 1000\nGUI r\nDELAY 500\nSTRING cmd\nENTER" }
+];
+
+const defaultOrders = [
+  { orderId: "MBH-1021", phone: "9876543210", items: "Phantom NRF24 Dual-Box Pro", total: 2499, status: "Bench Testing Passed", courier: "Delhivery Surface", trackingNo: "DLH78921849", utr: "403918274192", date: "Nov 05, 2026" }
+];
+
+const defaultReviews = [
+  { id: 501, productKey: "hw_101", productName: "Phantom NRF24 Dual-Box Pro", userName: "Rohan V.", rating: 5, comment: "Solid range and super clean soldering. Tested in our lab up to 420m with the SMA antenna. Stealth courier arrived in 3 days!", verified: true, date: "Nov 04, 2026" },
+  { id: 502, productKey: "hw_102", productName: "GhostDucky Keystroke Injector", userName: "Aarav_Sec", rating: 5, comment: "Executes DuckyScripts super fast on RP2040. Plug and play right out of the box.", verified: true, date: "Nov 05, 2026" },
+  { id: 503, productKey: "vid_201", productName: "NRF24 Box Soldering & Full Wiring Blueprint", userName: "Karthik M.", rating: 5, comment: "Crystal clear 4K pinout explanation. Built my own unit on the first attempt!", verified: true, date: "Nov 06, 2026" }
+];
+
+if (baked.version && Number(baked.version) > Number(localStorage.getItem('mbh_baked_ver') || 0)) {
+  if (baked.hardware) localStorage.setItem('mbh_hw', JSON.stringify(baked.hardware));
+  if (baked.videos) localStorage.setItem('mbh_vid', JSON.stringify(baked.videos));
+  if (baked.codes) localStorage.setItem('mbh_cod', JSON.stringify(baked.codes));
+  if (baked.reviews) localStorage.setItem('mbh_reviews', JSON.stringify(baked.reviews));
+  localStorage.setItem('mbh_baked_ver', String(baked.version));
+}
+
+let hardwareItems = JSON.parse(localStorage.getItem('mbh_hw')) || baked.hardware || defaultHardware;
+let videoItems = JSON.parse(localStorage.getItem('mbh_vid')) || baked.videos || defaultVideos;
+let codeItems = JSON.parse(localStorage.getItem('mbh_cod')) || baked.codes || defaultCodes;
+let orders = JSON.parse(localStorage.getItem('mbh_orders')) || defaultOrders;
+let reviews = JSON.parse(localStorage.getItem('mbh_reviews')) || baked.reviews || defaultReviews;
+let users = JSON.parse(localStorage.getItem('mbh_users')) || [];
+let currentUser = JSON.parse(localStorage.getItem('mbh_current_user')) || null;
+let isAdminLoggedIn = JSON.parse(localStorage.getItem('mbh_is_admin')) || false;
+let cart = [], selectedHubStars = 5, selectedModalStars = 5, supabaseClient = null;
+
+function initSupabase() {
+  if (appConfig.supabaseUrl && appConfig.supabaseKey && window.supabase) {
+    try { supabaseClient = window.supabase.createClient(appConfig.supabaseUrl, appConfig.supabaseKey); $('cloudStatusText').textContent = "Cloud Synced • Stealth Courier Active"; } catch (e) {}
+  }
+}
+
+async function computeSHA256(str) {
+  const buf = new TextEncoder().encode(str);
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getDeviceFingerprint() {
+  const n = navigator, s = window.screen, raw = `${n.userAgent}|${s.width}x${s.height}|${n.language}`;
+  let hash = 0; for (let i = 0; i < raw.length; i++) hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+  return 'MBH-DEV-' + Math.abs(hash).toString(16).toUpperCase();
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+function normalizeYouTubeUrl(u) {
+  if (!u || u.includes('youtube.com/embed/')) return u || '';
+  const m = u.match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : u;
+}
+
+async function loadFromCloudIfAvailable() {
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient.from('mbh_store_state').select('*');
+    if (error || !data) return;
+    data.forEach(r => {
+      if (r.key === 'hardware' && Array.isArray(r.value)) hardwareItems = r.value;
+      if (r.key === 'videos' && Array.isArray(r.value)) videoItems = r.value;
+      if (r.key === 'codes' && Array.isArray(r.value)) codeItems = r.value;
+      if (r.key === 'orders' && Array.isArray(r.value)) orders = r.value;
+      if (r.key === 'reviews' && Array.isArray(r.value)) reviews = r.value;
+      if (r.key === 'users' && Array.isArray(r.value)) users = r.value;
+    });
+    saveLocalOnly(); renderCatalogue(); renderAdminOrders();
+  } catch (e) {}
+}
+
+function saveLocalOnly() {
+  localStorage.setItem('mbh_hw', JSON.stringify(hardwareItems));
+  localStorage.setItem('mbh_vid', JSON.stringify(videoItems));
+  localStorage.setItem('mbh_cod', JSON.stringify(codeItems));
+  localStorage.setItem('mbh_orders', JSON.stringify(orders));
+  localStorage.setItem('mbh_reviews', JSON.stringify(reviews));
+  localStorage.setItem('mbh_users', JSON.stringify(users));
+}
+
+async function saveAllData() {
+  saveLocalOnly(); renderCatalogue(); renderAdminOrders();
+  if (supabaseClient) {
+    try {
+      await supabaseClient.from('mbh_store_state').upsert([
+        { key: 'hardware', value: hardwareItems }, { key: 'videos', value: videoItems },
+        { key: 'codes', value: codeItems }, { key: 'orders', value: orders },
+        { key: 'reviews', value: reviews }, { key: 'users', value: users }
+      ], { onConflict: 'key' });
+    } catch (e) {}
+  }
+}
+
+async function pushLocalDataToCloud() {
+  if (!supabaseClient) return alert("Please save your Supabase URL and Anon Key first!");
+  await saveAllData(); alert("✅ All local data synced to Supabase Cloud!");
+}
+
+function downloadUpdatedHtml() {
+  const newBaked = {
+    version: Date.now(), hardware: hardwareItems, videos: videoItems, codes: codeItems, reviews: reviews,
+    supabaseUrl: appConfig.supabaseUrl, supabaseKey: appConfig.supabaseKey, razorpayKey: appConfig.razorpayKey,
+    upiId: appConfig.upiId, whatsappNo: appConfig.whatsappNo, adminHash: appConfig.adminHash
+  };
+  $('mbhBakedState').textContent = JSON.stringify(newBaked);
+  $('adminPortalModal').classList.add('hidden');
+  const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  $('adminPortalModal').classList.remove('hidden');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([fullHtml], { type: 'text/html' }));
+  a.download = 'index.html';
+  a.click();
+}
+
+function getAllProductsList() {
+  const list = [];
+  hardwareItems.forEach(p => list.push({ key: `hw_${p.id}`, name: p.name, type: 'Hardware' }));
+  videoItems.forEach(v => list.push({ key: `vid_${v.id}`, name: v.title, type: 'Build Video' }));
+  codeItems.forEach(c => list.push({ key: `cod_${c.id}`, name: c.title, type: 'Source Code' }));
+  return list;
+}
+
+function getProductRatingStats(productKey) {
+  const pr = reviews.filter(r => r.productKey === productKey);
+  if (!pr.length) return { avg: "5.0", count: 0, stars: "★★★★★" };
+  const avgNum = pr.reduce((a, r) => a + Number(r.rating || 5), 0) / pr.length, rd = Math.round(avgNum);
+  return { avg: avgNum.toFixed(1), count: pr.length, stars: "★".repeat(rd) + "☆".repeat(5 - rd) };
+}
+
+function setHubStars(n) {
+  selectedHubStars = n;
+  document.querySelectorAll('#hubStarContainer button').forEach((b, i) => { b.textContent = i < n ? '★' : '☆'; b.className = i < n ? 'text-xl text-amber-400' : 'text-xl text-slate-600'; });
+  $('hubStarLabel').textContent = `${n} / 5 Stars`;
+}
+
+function setModalStars(n) {
+  selectedModalStars = n;
+  document.querySelectorAll('#modalStarContainer button').forEach((b, i) => { b.textContent = i < n ? '★' : '☆'; b.className = i < n ? 'text-lg text-amber-400' : 'text-lg text-slate-600'; });
+  $('modalStarLabel').textContent = `${n}/5`;
+}
+
+function openProductReviewModal(k, n) {
+  $('prmProductKey').value = k; $('prmProductName').value = n; $('prmTitle').textContent = n;
+  setModalStars(5); renderModalProductReviews(k); $('productReviewModal').classList.remove('hidden'); lucide.createIcons();
+}
+function closeProductReviewModal() { $('productReviewModal').classList.add('hidden'); }
+
+function renderModalProductReviews(k) {
+  const st = getProductRatingStats(k);
+  $('prmStats').innerHTML = `<span class="text-amber-400 font-bold">${st.stars} ${st.avg}</span> • ${st.count} Customer Review(s)`;
+  const pr = reviews.filter(r => r.productKey === k), listEl = $('prmReviewsList');
+  if (!pr.length) listEl.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs bg-slate-900/50 rounded-xl border border-slate-800">No reviews yet. Be the first to rate this product!</div>`;
+  else listEl.innerHTML = pr.map(r => `<div class="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5"><div class="flex justify-between items-center"><div class="flex items-center gap-2"><span class="font-bold text-white text-xs">${escapeHtml(r.userName)}</span>${r.verified ? `<span class="px-1.5 py-0.5 text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 rounded font-semibold">✔ Verified</span>` : ''}</div><div class="flex items-center gap-2"><span class="text-amber-400 text-xs font-bold">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span>${isAdminLoggedIn ? `<button onclick="deleteReview(${r.id}, '${k}')" class="text-red-400 hover:underline text-[10px]">Delete</button>` : ''}</div></div><p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(r.comment)}</p><span class="text-[10px] text-slate-500 block">${escapeHtml(r.date)}</span></div>`).join('');
+}
+
+function submitModalProductReview(e) {
+  e.preventDefault();
+  const productKey = $('prmProductKey').value, productName = $('prmProductName').value, userName = $('prmUserName').value.trim(), comment = $('prmComment').value.trim();
+  if (!userName || !comment) return;
+  reviews.unshift({ id: Date.now(), productKey, productName, userName, rating: selectedModalStars, comment, verified: !!currentUser, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
+  $('prmUserName').value = ''; $('prmComment').value = ''; saveAllData(); renderModalProductReviews(productKey); alert("🎉 Review posted!");
+}
+
+function submitHubReview(e) {
+  e.preventDefault();
+  const sel = $('hubRevProduct'), productKey = sel.value, productName = sel.options[sel.selectedIndex]?.getAttribute('data-name') || 'Product', userName = $('hubRevName').value.trim(), comment = $('hubRevComment').value.trim();
+  if (!productKey || !userName || !comment) return;
+  reviews.unshift({ id: Date.now(), productKey, productName, userName, rating: selectedHubStars, comment, verified: !!currentUser, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
+  $('hubRevName').value = ''; $('hubRevComment').value = ''; saveAllData(); renderReviewsSection(); alert("🎉 Review published!");
+}
+
+function deleteReview(id, mk = null) { reviews = reviews.filter(r => r.id !== id); saveAllData(); if (mk) renderModalProductReviews(mk); renderReviewsSection(); }
+
+function renderReviewsSection() {
+  const allProducts = getAllProductsList(), hubSelect = $('hubRevProduct'), filterSelect = $('filterRevProduct'), currentFilter = filterSelect ? filterSelect.value : 'all';
+  if (hubSelect) hubSelect.innerHTML = allProducts.map(p => `<option value="${p.key}" data-name="${escapeHtml(p.name)}">[${p.type}] ${escapeHtml(p.name)}</option>`).join('');
+  if (filterSelect) filterSelect.innerHTML = `<option value="all">All Products (${reviews.length})</option>` + allProducts.map(p => `<option value="${p.key}" ${currentFilter === p.key ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+  const totalCount = reviews.length;
+  $('overallStoreAvg').textContent = totalCount > 0 ? (reviews.reduce((s, r) => s + Number(r.rating || 5), 0) / totalCount).toFixed(1) : "5.0";
+  $('overallStoreCount').textContent = totalCount;
+  const filtered = currentFilter === 'all' ? reviews : reviews.filter(r => r.productKey === currentFilter), feedEl = $('reviewsFeedList');
+  if (!filtered.length) feedEl.innerHTML = `<div class="col-span-2 p-10 text-center text-slate-500 text-xs bg-surface-card border border-surface-border rounded-xl">No reviews found. Be the first to post a review!</div>`;
+  else feedEl.innerHTML = filtered.map(r => `<div class="clean-card rounded-xl p-4 flex flex-col justify-between space-y-3"><div><div class="flex justify-between items-start gap-2"><span class="text-[10px] font-bold text-sky-400 uppercase tracking-wider truncate">${escapeHtml(r.productName)}</span><span class="text-amber-400 text-xs font-bold shrink-0">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span></div><p class="text-xs text-slate-200 mt-2 leading-relaxed">"${escapeHtml(r.comment)}"</p></div><div class="pt-2.5 border-t border-slate-800/80 flex justify-between items-center text-[11px]"><div class="flex items-center gap-1.5"><span class="font-bold text-white">${escapeHtml(r.userName)}</span>${r.verified ? `<span class="px-1.5 py-0.5 text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 rounded">✔ Verified</span>` : ''}</div><div class="flex items-center gap-2"><span class="text-slate-500 text-[10px]">${escapeHtml(r.date)}</span>${isAdminLoggedIn ? `<button onclick="deleteReview(${r.id})" class="text-red-400 hover:underline text-[10px]">Delete</button>` : ''}</div></div></div>`).join('');
+}
+
+function switchMainSection(type) {
+  ['Hardware','Videos','Codes','Reviews'].forEach(s => $(`section${s}`).classList.add('hidden'));
+  $('tabHardwareBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+  $('tabVideosBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+  $('tabCodesBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+  $('tabReviewsBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-amber-400 hover:text-white";
+  if (type === 'hardware') { $('sectionHardware').classList.remove('hidden'); $('tabHardwareBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-brand-600 text-white shadow-md"; }
+  else if (type === 'videos') { $('sectionVideos').classList.remove('hidden'); $('tabVideosBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-md"; }
+  else if (type === 'codes') { $('sectionCodes').classList.remove('hidden'); $('tabCodesBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-sky-600 text-white shadow-md"; }
+  else if (type === 'reviews') { $('sectionReviews').classList.remove('hidden'); $('tabReviewsBtn').className = "px-3 sm:px-5 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow-md"; renderReviewsSection(); }
+}
+
+function renderCatalogue() {
+  $('countHardware').textContent = hardwareItems.length; $('countVideos').textContent = videoItems.length;
+  $('countCodes').textContent = codeItems.length; $('countReviews').textContent = reviews.length;
+
+  $('hardwareGrid').innerHTML = hardwareItems.map(p => {
+    const key = `hw_${p.id}`, st = getProductRatingStats(key);
+    return `<div class="clean-card rounded-xl p-4 sm:p-5 flex flex-col justify-between"><div><div class="relative w-full h-44 rounded-lg overflow-hidden bg-slate-900 border border-slate-800 mb-4 group"><img src="${p.image}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">${p.has3d ? `<button onclick="open3dModal('${escapeHtml(p.name)}')" class="absolute bottom-2.5 right-2.5 px-2.5 py-1.5 bg-slate-950/85 hover:bg-brand-600 text-white rounded text-[11px] font-medium border border-slate-700/80 flex items-center gap-1.5"><i data-lucide="rotate-3d" class="w-3.5 h-3.5 text-sky-400"></i> View in 3D</button>` : ''}<span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-950/85 text-sky-400 border border-slate-700">${escapeHtml(p.badge || 'DEVICE')}</span></div><button onclick="openProductReviewModal('${key}', '${escapeHtml(p.name)}')" class="text-[11px] text-amber-400 hover:underline font-semibold flex items-center gap-1 mb-1"><span>★ ${st.avg}</span><span class="text-slate-400">(${st.count} Reviews) • Rate</span></button><h3 class="font-display font-bold text-base text-white">${escapeHtml(p.name)}</h3><p class="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">${escapeHtml(p.desc)}</p><div class="py-2.5 border-t border-slate-800/80 space-y-1 text-[11px] text-slate-300 mt-3">${(p.features || []).map(f => `<div class="flex items-center gap-1.5"><span class="text-sky-400">▪</span> ${escapeHtml(f)}</div>`).join('')}</div></div><div class="mt-4 pt-3.5 border-t border-slate-800 flex items-center justify-between"><div><span class="text-[10px] text-slate-500 font-medium block">HARDWARE PRICE</span><span class="font-display font-bold text-xl text-white">₹${Number(p.price).toLocaleString()}</span></div><div class="flex items-center gap-1.5"><button onclick="openProductReviewModal('${key}', '${escapeHtml(p.name)}')" class="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-700 rounded-lg text-xs font-semibold" title="Rate & Review">★</button><button onclick="addToCart('hw', ${p.id})" class="px-3.5 py-2 bg-slate-800 hover:bg-brand-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Add to Cart</button></div></div></div>`;
+  }).join('');
+
+  $('videosGrid').innerHTML = videoItems.map(v => {
+    const key = `vid_${v.id}`, st = getProductRatingStats(key);
+    return `<div class="clean-card rounded-xl p-4 sm:p-5 flex flex-col justify-between border-emerald-900/30"><div><div class="relative w-full h-44 rounded-lg overflow-hidden bg-slate-950 border border-emerald-800/40 mb-4 flex items-center justify-center group"><div class="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform"><i data-lucide="play" class="w-6 h-6 ml-0.5"></i></div><span class="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-[10px] bg-slate-950 font-mono text-emerald-400">${escapeHtml(v.duration)}</span><span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-700">WIRING BLUEPRINT</span></div><button onclick="openProductReviewModal('${key}', '${escapeHtml(v.title)}')" class="text-[11px] text-amber-400 hover:underline font-semibold flex items-center gap-1 mb-1"><span>★ ${st.avg}</span><span class="text-slate-400">(${st.count} Reviews) • Rate</span></button><h3 class="font-display font-bold text-base text-white">${escapeHtml(v.title)}</h3><p class="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-3">${escapeHtml(v.desc)}</p></div><div class="mt-4 pt-3.5 border-t border-slate-800 flex items-center justify-between"><div><span class="text-[10px] text-slate-500 font-medium block">MASTERCLASS PRICE</span><span class="font-display font-bold text-xl text-emerald-400">₹${Number(v.price).toLocaleString()}</span></div><div class="flex items-center gap-1.5"><button onclick="openProductReviewModal('${key}', '${escapeHtml(v.title)}')" class="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-700 rounded-lg text-xs font-semibold" title="Rate & Review">★</button><button onclick="addToCart('vid', ${v.id})" class="px-3.5 py-2 bg-emerald-950 hover:bg-emerald-600 border border-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"><i data-lucide="key" class="w-3.5 h-3.5"></i> Get Access</button></div></div></div>`;
+  }).join('');
+
+  $('codesGrid').innerHTML = codeItems.map(c => {
+    const key = `cod_${c.id}`, st = getProductRatingStats(key);
+    return `<div class="clean-card rounded-xl p-4 sm:p-5 flex flex-col justify-between border-sky-900/30"><div><div class="w-full h-24 rounded-lg bg-slate-950 border border-slate-800 p-3 mb-4 font-mono text-[11px] text-sky-400 overflow-hidden relative"><code>// Exploit Firmware Script\n#include &lt;PentestKit.h&gt;</code><span class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] bg-slate-900 text-slate-400 uppercase font-bold">${escapeHtml(c.lang)}</span></div><button onclick="openProductReviewModal('${key}', '${escapeHtml(c.title)}')" class="text-[11px] text-amber-400 hover:underline font-semibold flex items-center gap-1 mb-1"><span>★ ${st.avg}</span><span class="text-slate-400">(${st.count} Reviews) • Rate</span></button><h3 class="font-display font-bold text-base text-white">${escapeHtml(c.title)}</h3><p class="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">${escapeHtml(c.desc)}</p></div><div class="mt-4 pt-3.5 border-t border-slate-800 flex items-center justify-between"><div><span class="text-[10px] text-slate-500 font-medium block">SOURCE CODE LICENSE</span><span class="font-display font-bold text-xl text-sky-400">₹${Number(c.price).toLocaleString()}</span></div><div class="flex items-center gap-1.5"><button onclick="openProductReviewModal('${key}', '${escapeHtml(c.title)}')" class="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-700 rounded-lg text-xs font-semibold" title="Rate & Review">★</button><button onclick="addToCart('cod', ${c.id})" class="px-3.5 py-2 bg-sky-950 hover:bg-sky-600 border border-sky-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Buy License</button></div></div></div>`;
+  }).join('');
+
+  renderReviewsSection(); lucide.createIcons(); renderAdminLists();
+}
+
+function openTrackingModal() { $('trackingModal').classList.remove('hidden'); $('trackingResult').classList.add('hidden'); lucide.createIcons(); }
+function closeTrackingModal() { $('trackingModal').classList.add('hidden'); }
+
+async function searchOrderStatus() {
+  await loadFromCloudIfAvailable();
+  const q = $('trackSearchInput').value.trim().toLowerCase(), resBox = $('trackingResult');
+  if (!q) return alert("Please enter Order ID or Mobile Number!");
+  const found = orders.find(o => o.orderId.toLowerCase() === q || o.phone.includes(q));
+  resBox.classList.remove('hidden');
+  if (!found) resBox.innerHTML = `<div class="p-3 bg-red-950/40 border border-red-800 text-red-400 rounded-lg text-center">No active order found matching "${escapeHtml(q)}".</div>`;
+  else resBox.innerHTML = `<div class="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-3"><div class="flex justify-between items-start"><div><span class="text-[10px] text-sky-400 font-mono font-bold block">${escapeHtml(found.orderId)}</span><h4 class="font-bold text-white text-sm">${escapeHtml(found.items)}</h4><span class="text-slate-400 text-[11px]">Total Bill: ₹${Number(found.total).toLocaleString()}</span></div><span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">${escapeHtml(found.status)}</span></div><div class="py-2 border-t border-slate-800 space-y-2"><div class="flex items-center gap-2 text-slate-300"><span class="text-emerald-400">✔</span> <span>Payment Reference: ${escapeHtml(found.utr || 'Confirmed')}</span></div><div class="flex items-center gap-2 text-slate-300"><span class="text-emerald-400">✔</span> <span>Bench Quality Testing Passed</span></div><div class="flex items-center gap-2 text-slate-300"><span class="text-sky-400">📦</span> <span>Courier: <strong class="text-white">${escapeHtml(found.courier || 'In Packaging')}</strong> (Tracking No: <span class="text-emerald-400 font-mono">${escapeHtml(found.trackingNo || 'Generating soon')}</span>)</span></div></div></div>`;
+  lucide.createIcons();
+}
+
+function openUpiCheckout() {
+  if (!cart.length) return alert("Your cart is empty!");
+  const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+  const upiString = `upi://pay?pa=${appConfig.upiId}&pn=MrBlackHats&am=${total}&cu=INR&tn=Hardware_Order`;
+  $('upiQrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+  $('upiPayableAmount').textContent = `₹${total.toLocaleString()}`;
+  $('rzpBtnAmount').textContent = `₹${total.toLocaleString()}`;
+  $('upiVpaDisplay').textContent = appConfig.upiId;
+  if (currentUser && currentUser.phone) $('upiPhone').value = currentUser.phone;
+  toggleCart(false); $('upiCheckoutModal').classList.remove('hidden'); lucide.createIcons();
+}
+function closeUpiCheckout() { $('upiCheckoutModal').classList.add('hidden'); }
+
+function unlockDigitalItemsForCustomer(phone) {
+  let u = users.find(x => x.phone === phone);
+  if (!u) { u = { phone, password: phone.slice(-4), purchasedDigital: [] }; users.push(u); }
+  if (!Array.isArray(u.purchasedDigital)) u.purchasedDigital = [];
+  cart.forEach(item => {
+    if (item.type === 'Video Masterclass' || item.type === 'Source Code') {
+      const mt = item.type === 'Video Masterclass' ? 'video' : 'code';
+      if (!u.purchasedDigital.some(d => d.id === item.id && d.type === mt)) u.purchasedDigital.push({ id: item.id, title: item.name, type: mt, boundDevice: null });
+    }
+  });
+}
+
+function finalizeOrderRecord(phone, address, paymentRef, statusLabel) {
+  const total = cart.reduce((s, i) => s + (i.price * i.qty), 0), newOrderId = "MBH-" + Math.floor(1000 + Math.random() * 9000), itemsStr = cart.map(i => `${i.name} (x${i.qty})`).join(', ');
+  orders.unshift({ orderId: newOrderId, phone, items: itemsStr, total, status: statusLabel, courier: "Dispatched within 24h", trackingNo: "Pending Dispatch", utr: paymentRef, address, date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) });
+  unlockDigitalItemsForCustomer(phone); saveAllData();
+  let msg = `*CONFIRMED ORDER [${newOrderId}]*%0A------------------------%0A• *Items:* ${itemsStr}%0A• *Amount Paid:* ₹${total}%0A• *Payment Ref:* ${paymentRef}%0A• *Phone:* ${phone}%0A• *Address:* ${address}%0A------------------------%0APlease dispatch my order!`;
+  window.open(`https://wa.me/${appConfig.whatsappNo}?text=${msg}`, '_blank');
+  alert(`🎉 Order Confirmed! Your Order ID is: ${newOrderId}`);
+  cart = []; updateCartUI(); closeUpiCheckout();
+}
+
+function launchRazorpayCheckout() {
+  const phone = $('upiPhone').value.trim(), address = $('upiAddress').value.trim();
+  if (!phone || !address) return alert("Please enter your Mobile Number and Shipping Address below before clicking Pay Now!");
+  const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+  const rzp = new Razorpay({
+    key: appConfig.razorpayKey || DEFAULT_RZP_KEY, amount: total * 100, currency: "INR", name: "Mr Black Hats Store",
+    description: "Hardware Security Labs & Blueprints", prefill: { contact: phone }, theme: { color: "#0284c7" },
+    handler: function (res) { finalizeOrderRecord(phone, address, res.razorpay_payment_id, "Verified via Razorpay"); }
+  });
+  rzp.open();
+}
+
+function handleUpiOrderSubmit(e) {
+  e.preventDefault();
+  const phone = $('upiPhone').value.trim(), address = $('upiAddress').value.trim(), utr = $('upiUtr').value.trim();
+  if (!phone || !utr) return alert("Please fill Mobile number and UPI UTR Ref No.!");
+  finalizeOrderRecord(phone, address, utr, "Payment Received (Testing in Progress)");
+}
+
+function openVaultModal() {
+  if (!currentUser) { alert("Please log in with your mobile number first!"); openAuthModal(); return; }
+  const vault = $('vaultContent'), u = users.find(x => x.phone === currentUser.phone), lib = (u && u.purchasedDigital) ? u.purchasedDigital : [];
+  if (!lib.length) vault.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs"><i data-lucide="lock" class="w-8 h-8 mx-auto mb-2 text-slate-600"></i>No unlocked build videos or codes in your account yet.</div>`;
+  else {
+    const devId = getDeviceFingerprint();
+    vault.innerHTML = lib.map(item => {
+      const isLocked = item.boundDevice && item.boundDevice !== devId;
+      return `<div class="p-3.5 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-between"><div><span class="text-[10px] font-bold text-sky-400 uppercase">[${escapeHtml(item.type)}]</span><h4 class="font-bold text-white text-xs mt-0.5">${escapeHtml(item.title)}</h4><span class="text-[10px] text-slate-500 font-mono">${item.boundDevice ? (isLocked ? '<span class="text-red-400 font-bold">LOCKED TO OTHER DEVICE</span>' : '<span class="text-emerald-400">AUTHORIZED DEVICE</span>') : 'Unbound'}</span></div><div>${isLocked ? `<button disabled class="px-3 py-1.5 bg-red-950/60 border border-red-800 text-red-400 text-xs rounded opacity-60">Locked</button>` : `<button onclick="launchDrmMedia('${item.type}', ${item.id})" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded flex items-center gap-1"><i data-lucide="play" class="w-3.5 h-3.5"></i> Open</button>`}</div></div>`;
+    }).join('');
+  }
+  $('vaultModal').classList.remove('hidden'); lucide.createIcons();
+}
+function closeVaultModal() { $('vaultModal').classList.add('hidden'); }
+
+function launchDrmMedia(type, id) {
+  closeVaultModal();
+  const devId = getDeviceFingerprint(), u = users.find(x => x.phone === currentUser.phone), item = u.purchasedDigital.find(i => i.id === id && i.type === type);
+  if (!item) return;
+  if (!item.boundDevice) { item.boundDevice = devId; saveAllData(); }
+  else if (item.boundDevice !== devId) return alert("ACCESS DENIED: Locked to another device!");
+  $('floatingWatermark').textContent = `LICENSED TO: +91 ${currentUser.phone} // ${devId}`;
+  $('drmViewerTitle').textContent = item.title; $('drmViewerType').textContent = type.toUpperCase();
+  const body = $('drmViewerBody');
+  if (type === 'video') {
+    const v = videoItems.find(x => x.id === id); if (!v) return alert("Video not found.");
+    body.innerHTML = `<iframe src="${normalizeYouTubeUrl(v.url)}?autoplay=1" class="w-full h-72 sm:h-96 border-none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  } else {
+    const c = codeItems.find(x => x.id === id); if (!c) return alert("Code not found.");
+    body.innerHTML = `<div class="w-full p-4 font-mono text-xs text-emerald-400 overflow-x-auto"><pre class="select-none">${escapeHtml(c.code)}</pre></div>`;
+  }
+  $('drmViewerModal').classList.remove('hidden'); lucide.createIcons();
+}
+function closeDrmViewer() { $('drmViewerBody').innerHTML = ''; $('drmViewerModal').classList.add('hidden'); }
+
+function handleAdminButtonClick() { if (isAdminLoggedIn) showAdminDashboard(); else showAdminLogin(); $('adminPortalModal').classList.remove('hidden'); lucide.createIcons(); }
+function closeAdminPortal() { $('adminPortalModal').classList.add('hidden'); }
+function showAdminLogin() { $('adminLoginView').classList.remove('hidden'); $('adminResetView').classList.add('hidden'); $('adminDashboardView').classList.add('hidden'); $('adminLogoutBtn').classList.add('hidden'); $('adminExportBtn').classList.add('hidden'); }
+function toggleAdminResetView(show) { $('adminLoginView').classList.toggle('hidden', show); $('adminResetView').classList.toggle('hidden', !show); lucide.createIcons(); }
+
+function showAdminDashboard() {
+  $('adminLoginView').classList.add('hidden'); $('adminResetView').classList.add('hidden');
+  $('adminDashboardView').classList.remove('hidden'); $('adminLogoutBtn').classList.remove('hidden'); $('adminExportBtn').classList.remove('hidden');
+  $('cfgSupabaseUrl').value = appConfig.supabaseUrl || ''; $('cfgSupabaseKey').value = appConfig.supabaseKey || '';
+  $('cfgRazorpayKey').value = appConfig.razorpayKey || DEFAULT_RZP_KEY; $('cfgUpiId').value = appConfig.upiId || '8081275719-2@ybl';
+  $('cfgWhatsappNo').value = appConfig.whatsappNo || '919196103278';
+  renderAdminLists(); renderAdminOrders(); lucide.createIcons();
+}
+
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const h = await computeSHA256(`${$('adminAuthNumber').value.trim()}:${$('adminAuthPassword').value.trim()}`);
+  if (h === appConfig.adminHash || h === _H1 || h === _H2) { isAdminLoggedIn = true; localStorage.setItem('mbh_is_admin', 'true'); showAdminDashboard(); renderCatalogue(); }
+  else alert("Authentication Failed: Invalid Admin Credentials.");
+}
+
+async function handleAdminCredentialReset(e) {
+  e.preventDefault();
+  if ($('resetRecoveryKey').value.trim() !== MASTER_RECOVERY_KEY) return alert("Invalid Master Recovery Key!");
+  const newHash = await computeSHA256(`${$('resetNewAdminPhone').value.trim()}:${$('resetNewAdminPass').value.trim()}`);
+  appConfig.adminHash = newHash; localStorage.setItem('mbh_admin_hash', newHash); localStorage.setItem('mbh_config', JSON.stringify(appConfig));
+  alert("✅ Admin credentials reset!"); toggleAdminResetView(false);
+}
+
+async function updateAdminCredentialsFromDashboard() {
+  const np = $('cfgNewAdminPhone').value.trim(), pw = $('cfgNewAdminPass').value.trim();
+  if (!np || !pw) return alert("Enter both new Admin Mobile Number and Password!");
+  const newHash = await computeSHA256(`${np}:${pw}`);
+  appConfig.adminHash = newHash; localStorage.setItem('mbh_admin_hash', newHash); localStorage.setItem('mbh_config', JSON.stringify(appConfig));
+  alert("✅ Admin credentials updated!");
+}
+
+function saveIntegrationConfig() {
+  appConfig.supabaseUrl = $('cfgSupabaseUrl').value.trim(); appConfig.supabaseKey = $('cfgSupabaseKey').value.trim();
+  appConfig.razorpayKey = $('cfgRazorpayKey').value.trim() || DEFAULT_RZP_KEY; appConfig.upiId = $('cfgUpiId').value.trim() || "8081275719-2@ybl";
+  appConfig.whatsappNo = $('cfgWhatsappNo').value.trim() || "919196103278";
+  localStorage.setItem('mbh_config', JSON.stringify(appConfig)); initSupabase(); loadFromCloudIfAvailable(); alert("✅ Settings saved!");
+}
+
+function adminLogout() { isAdminLoggedIn = false; localStorage.removeItem('mbh_is_admin'); showAdminLogin(); renderCatalogue(); }
+
+function switchAdminTab(type) {
+  ['Hardware','Videos','Codes','Orders','Settings'].forEach(t => $(`adminPanel${t}`).classList.add('hidden'));
+  ['admTabHw','admTabVid','admTabCod','admTabOrd','admTabSet'].forEach(t => $(t).className = "py-2.5 px-4 font-bold text-xs border-b-2 border-transparent text-slate-400 hover:text-white");
+  if (type === 'hardware') { $('adminPanelHardware').classList.remove('hidden'); $('admTabHw').className = "py-2.5 px-4 font-bold text-xs border-b-2 border-brand-500 text-white"; }
+  if (type === 'videos') { $('adminPanelVideos').classList.remove('hidden'); $('admTabVid').className = "py-2.5 px-4 font-bold text-xs border-b-2 border-brand-500 text-white"; }
+  if (type === 'codes') { $('adminPanelCodes').classList.remove('hidden'); $('admTabCod').className = "py-2.5 px-4 font-bold text-xs border-b-2 border-brand-500 text-white"; }
+  if (type === 'orders') { $('adminPanelOrders').classList.remove('hidden'); $('admTabOrd').className = "py-2.5 px-4 font-bold text-xs border-b-2 border-emerald-500 text-white"; }
+  if (type === 'settings') { $('adminPanelSettings').classList.remove('hidden'); $('admTabSet').className = "py-2.5 px-4 font-bold text-xs border-b-2 border-amber-500 text-white"; }
+}
+
+function renderAdminOrders() {
+  $('adminOrdersCount').textContent = orders.length;
+  $('adminOrdersList').innerHTML = orders.map((o, idx) => `<div class="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-2"><div class="flex justify-between"><div><span class="font-bold text-sky-400 font-mono">${escapeHtml(o.orderId)}</span><span class="text-white font-semibold ml-2">${escapeHtml(o.phone)}</span><span class="text-slate-400 block text-[11px]">${escapeHtml(o.items)} • ₹${o.total} • Ref: ${escapeHtml(o.utr || 'N/A')}</span>${o.address ? `<span class="text-slate-500 block text-[10px]">📍 ${escapeHtml(o.address)}</span>` : ''}</div><span class="text-[10px] text-slate-500">${escapeHtml(o.date)}</span></div><div class="flex items-center gap-2 pt-2 border-t border-slate-800/80 flex-wrap"><input type="text" value="${escapeHtml(o.status)}" id="status_${idx}" placeholder="Status" class="inp flex-1"><input type="text" value="${escapeHtml(o.courier || '')}" id="cour_${idx}" placeholder="Courier" class="inp w-28"><input type="text" value="${escapeHtml(o.trackingNo || '')}" id="track_${idx}" placeholder="Tracking No" class="inp w-28"><button onclick="updateOrderRow(${idx})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-[11px]">Save</button></div></div>`).join('');
+}
+
+function updateOrderRow(idx) {
+  orders[idx].status = $(`status_${idx}`).value; orders[idx].courier = $(`cour_${idx}`).value; orders[idx].trackingNo = $(`track_${idx}`).value;
+  saveAllData(); alert("Order tracking info updated!");
+}
+
+function resetHwForm() { ['hwEditId','hwTitle','hwPrice','hwDesc','hwSpecs','hwExistingImage','hwImageFile'].forEach(k => $(k).value = ''); }
+
+function editHardwareItem(id) {
+  const p = hardwareItems.find(x => x.id === id); if (!p) return;
+  $('hwEditId').value = p.id; $('hwTitle').value = p.name; $('hwPrice').value = p.price;
+  $('hwCat').value = p.category || 'rf'; $('hwDesc').value = p.desc || '';
+  $('hwSpecs').value = (p.features || []).join(', '); $('hwHas3d').checked = !!p.has3d; $('hwExistingImage').value = p.image || '';
+}
+
+function saveHardwareProduct() {
+  const id = $('hwEditId').value, name = $('hwTitle').value.trim(), price = parseFloat($('hwPrice').value);
+  const category = $('hwCat').value, desc = $('hwDesc').value.trim(), specs = $('hwSpecs').value.trim();
+  const has3d = $('hwHas3d').checked, fileInput = $('hwImageFile'), existingImg = $('hwExistingImage').value.trim();
+  if (!name || isNaN(price)) return alert("Please fill title and price!");
+  const features = specs ? specs.split(',').map(s => s.trim()) : ["Custom Hardware", "Pre-tested"];
+  const fin = (imgSrc) => {
+    const image = imgSrc || existingImg || "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80";
+    if (id) { const idx = hardwareItems.findIndex(p => p.id == id); if (idx > -1) hardwareItems[idx] = { ...hardwareItems[idx], name, price, category, desc, features, has3d, image }; }
+    else hardwareItems.unshift({ id: Date.now(), name, price, category, desc, features, has3d, image, badge: "NEW MODEL" });
+    resetHwForm(); saveAllData(); alert("✅ Hardware saved! Now click '💾 Download Updated HTML' at the top to upload to GitHub.");
+  };
+  if (fileInput.files && fileInput.files[0]) { const reader = new FileReader(); reader.onload = e => fin(e.target.result); reader.readAsDataURL(fileInput.files[0]); }
+  else fin(null);
+}
+
+function saveVideoProduct() {
+  const title = $('vidTitle').value.trim(), price = parseFloat($('vidPrice').value), duration = $('vidDuration').value.trim() || "1h 30m HD", url = normalizeYouTubeUrl($('vidUrl').value.trim()), desc = $('vidDesc').value.trim();
+  if (!title || isNaN(price) || !url) return alert("Please fill Title, Price, and Video URL!");
+  videoItems.unshift({ id: Date.now(), title, price, duration, url, desc }); saveAllData(); alert("✅ Video Published!");
+}
+
+function saveCodeProduct() {
+  const title = $('codeTitle').value.trim(), price = parseFloat($('codePrice').value), lang = $('codeLang').value.trim() || "C++ / Arduino", desc = $('codeDesc').value.trim(), code = $('codeRawContent').value.trim();
+  if (!title || isNaN(price) || !code) return alert("Please fill Title, Price, and Code!");
+  codeItems.unshift({ id: Date.now(), title, price, lang, desc, code }); saveAllData(); alert("✅ Source Code Published!");
+}
+
+function renderAdminLists() {
+  $('adminHwList').innerHTML = hardwareItems.map(p => `<div class="p-2.5 bg-slate-950 border border-slate-800 rounded flex justify-between items-center"><div><span class="font-bold text-white">${escapeHtml(p.name)}</span><span class="text-[10px] text-slate-400 block">₹${p.price} • ${escapeHtml(p.category)}</span></div><div class="flex gap-3"><button onclick="editHardwareItem(${p.id})" class="text-sky-400 hover:underline font-bold">Edit Price/Info</button><button onclick="hardwareItems=hardwareItems.filter(x=>x.id!=${p.id});saveAllData();" class="text-red-400 hover:underline">Delete</button></div></div>`).join('');
+  $('adminVidList').innerHTML = videoItems.map(v => `<div class="p-2.5 bg-slate-950 border border-slate-800 rounded flex justify-between items-center"><div><span class="font-bold text-white">${escapeHtml(v.title)}</span><span class="text-[10px] text-emerald-400 block">₹${v.price} • ${escapeHtml(v.duration)}</span></div><button onclick="videoItems=videoItems.filter(x=>x.id!=${v.id});saveAllData();" class="text-red-400 hover:underline">Delete</button></div>`).join('');
+  $('adminCodList').innerHTML = codeItems.map(c => `<div class="p-2.5 bg-slate-950 border border-slate-800 rounded flex justify-between items-center"><div><span class="font-bold text-white">${escapeHtml(c.title)}</span><span class="text-[10px] text-sky-400 block">₹${c.price} • ${escapeHtml(c.lang)}</span></div><button onclick="codeItems=codeItems.filter(x=>x.id!=${c.id});saveAllData();" class="text-red-400 hover:underline">Delete</button></div>`).join('');
+}
+
+function addToCart(type, id) {
+  let item;
+  if (type === 'hw') item = { ...hardwareItems.find(p => p.id === id), type: 'Hardware' };
+  if (type === 'vid') { const v = videoItems.find(x => x.id === id); if (v) item = { ...v, name: v.title, type: 'Video Masterclass' }; }
+  if (type === 'cod') { const c = codeItems.find(x => x.id === id); if (c) item = { ...c, name: c.title, type: 'Source Code' }; }
+  if (!item) return;
+  const ex = cart.find(c => c.id === id && c.type === item.type);
+  if (ex) ex.qty += 1; else cart.push({ ...item, qty: 1 });
+  updateCartUI(); toggleCart(true);
+}
+
+function removeFromCart(idx) { cart.splice(idx, 1); updateCartUI(); }
+
+function updateCartUI() {
+  $('cartCount').textContent = cart.reduce((s, i) => s + i.qty, 0);
+  $('cartTotalDisplay').textContent = `₹${cart.reduce((s, i) => s + (i.price * i.qty), 0).toLocaleString()}`;
+  const list = $('cartItemList');
+  if (!cart.length) list.innerHTML = `<div class="text-center text-slate-500 text-xs py-16">Your loadout is empty.</div>`;
+  else {
+    list.innerHTML = cart.map((item, idx) => `<div class="p-3 bg-slate-900 border border-slate-800 rounded-lg flex justify-between items-center"><div class="truncate"><span class="text-[10px] text-sky-400 font-bold uppercase block">${escapeHtml(item.type)}</span><h4 class="font-bold text-xs text-white truncate">${escapeHtml(item.name)}</h4><span class="text-xs text-slate-400">₹${Number(item.price).toLocaleString()} × ${item.qty}</span></div><button onclick="removeFromCart(${idx})" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
+    lucide.createIcons();
+  }
+}
+
+function toggleCart(forceOpen = false) { const modal = $('cartModal'); if (forceOpen) modal.classList.remove('hidden'); else modal.classList.toggle('hidden'); }
+
+function checkoutToWhatsApp() {
+  if (!cart.length) return alert("Your cart is empty!");
+  let msg = `*ORDER INQUIRY - MR BLACK HATS STORE*%0A-----------------------------------%0A`, total = 0;
+  cart.forEach(item => { msg += `• [${item.type}] *${item.name}* (Qty: ${item.qty}) — ₹${(item.price * item.qty).toLocaleString()}%0A`; total += item.price * item.qty; });
+  msg += `-----------------------------------%0A*TOTAL AMOUNT: ₹${total.toLocaleString()}*%0A%0AHello Mr Black Hats, please share dispatch timeline and UPI details!`;
+  window.open(`https://wa.me/${appConfig.whatsappNo}?text=${msg}`, '_blank');
+}
+
+let authTab = 'login';
+function openAuthModal() {
+  if (currentUser) { if (confirm(`Signed in as +91 ${currentUser.phone}. Sign out?`)) { currentUser = null; localStorage.removeItem('mbh_current_user'); updateAuthUI(); } return; }
+  $('authModal').classList.remove('hidden'); lucide.createIcons();
+}
+function closeAuthModal() { $('authModal').classList.add('hidden'); }
+function switchAuthTab(t) {
+  authTab = t;
+  $('tabLoginBtn').className = t === 'login' ? "flex-1 py-2 font-semibold text-xs border-b-2 border-brand-500 text-white" : "flex-1 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400";
+  $('tabRegisterBtn').className = t === 'register' ? "flex-1 py-2 font-semibold text-xs border-b-2 border-brand-500 text-white" : "flex-1 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400";
+  $('authSubmitBtn').textContent = t === 'login' ? "Sign In" : "Register Account";
+}
+async function handleAuthSubmit(e) {
+  e.preventDefault(); await loadFromCloudIfAvailable();
+  const phone = $('authPhone').value.trim(), password = $('authPassword').value.trim();
+  if (!phone || !password) return;
+  if (authTab === 'register') {
+    if (users.find(u => u.phone === phone)) return alert("Account with this number already exists!");
+    users.push({ phone, password, purchasedDigital: [] }); currentUser = { phone }; localStorage.setItem('mbh_current_user', JSON.stringify(currentUser));
+    await saveAllData(); alert("Account created!");
+  } else {
+    const user = users.find(u => u.phone === phone && u.password === password);
+    if (!user) return alert("Invalid credentials!");
+    currentUser = { phone }; localStorage.setItem('mbh_current_user', JSON.stringify(currentUser)); alert("Signed in!");
+  }
+  closeAuthModal(); updateAuthUI();
+}
+function updateAuthUI() { $('userLoginStatusText').textContent = currentUser ? `+91 ${currentUser.phone.slice(-4)}` : "Login"; }
+
+let scene, camera, renderer, currentMesh, animFrameId = null, isDragging = false, prevMouseX = 0, prevMouseY = 0;
+function init3DViewer() {
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  if (renderer) renderer.dispose();
+  const container = $('threeContainer'); container.innerHTML = '';
+  scene = new THREE.Scene(); scene.background = new THREE.Color(0x060910);
+  camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.set(0, 2, 5); camera.lookAt(0, 0, 0);
+  renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(container.clientWidth, container.clientHeight); container.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const light = new THREE.DirectionalLight(0x38bdf8, 1.2); light.position.set(5, 10, 7); scene.add(light);
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 1.6), new THREE.MeshStandardMaterial({ color: 0x1e293b })));
+  const screenMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.5), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+  screenMesh.rotation.x = -Math.PI / 2; screenMesh.position.set(-0.4, 0.18, 0.2); group.add(screenMesh);
+  const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 16), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+  ant.position.set(1.1, 0.6, -0.6); group.add(ant);
+  currentMesh = group; scene.add(group);
+  renderer.domElement.addEventListener('mousedown', e => { isDragging = true; prevMouseX = e.clientX; prevMouseY = e.clientY; });
+  window.addEventListener('mouseup', () => isDragging = false);
+  renderer.domElement.addEventListener('mousemove', e => { if (!isDragging) return; currentMesh.rotation.y += (e.clientX - prevMouseX) * 0.01; currentMesh.rotation.x += (e.clientY - prevMouseY) * 0.01; prevMouseX = e.clientX; prevMouseY = e.clientY; });
+  function anim() { animFrameId = requestAnimationFrame(anim); if (!isDragging && currentMesh) currentMesh.rotation.y += 0.005; renderer.render(scene, camera); }
+  anim();
+}
+function open3dModal(name) { $('3dModalTitle').textContent = `${name} (Interactive 3D Geometry)`; $('view3dModal').classList.remove('hidden'); setTimeout(init3DViewer, 50); lucide.createIcons(); }
+function close3dModal() { if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; } $('view3dModal').classList.add('hidden'); }
+
+initSupabase(); loadFromCloudIfAvailable(); renderCatalogue(); renderAdminOrders(); updateAuthUI(); lucide.createIcons();
+</script>
+</body>
+</html>
